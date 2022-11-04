@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script>
+        const model = {
+            inputs: {
+                text: null,
+            },
+        };
+
+        getData();
+        function updateView() {
+            document.getElementById('app').innerHTML = /*HTML*/`
+                <ul>
+                    ${createTodoItemsHtml()}
+                </ul>
+                <input
+                    type="text"
+                    oninput="model.inputs.text=this.value"
+                    value="${model.inputs.text || ''}"
+                />
+                <button onclick="createTodoItem()">Lag ny</button>
+            `;
+        }
+
+        function createTodoItemsHtml() {
+            return model.todoItems.map(todoItem => /*HTML*/`
+                <li>
+                    ${todoItem.text}
+                    ${todoItem.done == null
+                    ? `<button onclick="registerDone('${todoItem.id}')">registrer gjort</button>`
+                    : `gjort ${new Date(todoItem.done).toLocaleDateString()}`}
+                    <button onclick="deleteTodoItem('${todoItem.id}')">x</button>
+                </li >
+                `).join('');
+        }
+
+        async function getData() {
+            const response = await axios.get('/todo');
+            model.todoItems = response.data;
+            updateView();
+        }
+
+        async function createTodoItem() {
+            const todoItem = {
+                text: model.inputs.text
+            };
+            const response = await axios.post('/todo', todoItem);
+            await getData();
+        }
+
+        async function registerDone(id) {
+            const response = await axios.put('/todo/' + id);
+            await getData();
+        }
+
+        async function deleteTodoItem(id) {
+            const response = await axios.delete('/todo/' + id);
+            await getData();
+        }
+
+    </script>
+</body>
+
+</html>
